@@ -8,6 +8,7 @@ import {
   ConflictException,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { CredentialsDTO } from 'src/auth/dto/credentials.dto';
 
 @EntityRepository(User)
 export class UserRepository extends Repository<User> {
@@ -43,6 +44,18 @@ export class UserRepository extends Repository<User> {
       }
     }
   }
+
+  async checkCredentials(credentialsDTO: CredentialsDTO): Promise<User> {
+    const { email, password } = credentialsDTO;
+    const user = await this.findOne({ email, status: true });
+
+    if (user && (await user.checkPassword(password))) {
+      return user;
+    }
+
+    return null;
+  }
+
   private async hashPassword(password: string, salt: string): Promise<string> {
     return bcrypt.hash(password, salt);
   }
